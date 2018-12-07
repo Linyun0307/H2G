@@ -1,0 +1,120 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "cpp_compile",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "-g",
+                "${file}",
+                "-o",
+                "${fileDirname}/${fileBasenameNoExtension}",
+                "-Wall"
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true
+            }
+        },
+        {
+            "label": "cpp_launch",
+            "type": "shell",
+            "command": "${fileDirname}/${fileBasenameNoExtension}",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true
+            },
+            "dependsOn": "cpp_compile"
+        },
+        {
+            "label": "java_compile",
+            "type": "shell",
+            "command": "javac",
+            "args": [
+                "${file}"
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "java_compile_package",
+            "type": "shell",
+            "command": "cd",
+            "args": [
+                "${fileDirname}",
+                "&&",
+                "javac",
+                "-cp",
+                "*.jar",
+                "-d",
+                ".",
+                "*.java"
+                
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "java_launch",
+            "type": "shell",
+            "command": "cd",
+            "args": [
+                "${fileDirname}",
+                "&&",
+                "java",
+                "${fileBasenameNoExtension}"
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "java_compile&launch",
+            "type": "shell",
+            "command": "cd",
+            "args": [
+                "${fileDirname}",
+                "&&",
+                "java",
+                "${fileBasenameNoExtension}"
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true
+            },
+            "dependsOn": [
+                "java_compile",
+            ],
+            "problemMatcher": []
+        },
+    ]
+}

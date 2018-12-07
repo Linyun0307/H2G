@@ -1,0 +1,19 @@
+{
+    "data": [
+        {
+            "from": {
+                "name": "Adam"
+            },
+            "message": "The first Mesage",
+            "int": 123456,
+            "bool": true,
+            "double": 2.33
+        },
+        {
+            "from": {
+                "name": "Bob"
+            },
+            "message": "The Second Message"
+        }
+    ]
+}
