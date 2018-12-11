@@ -2,49 +2,87 @@ package h2g;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 // import java.util.Random;
 import java.lang.Thread;
 public class BarDrawingTutor {
-    private final static Interpolator i = new Interpolator();
-    private final static HashMap<BarLocation, Double> transparency = Interpolator.bLD.transparency;
+    private static Interpolator i;
+    private static HashMap<BarLocation, Double> transparency;
+    private static double[] barWidth;
     private Bar[] bar;
-    private int arrayHead = 0, position = 0;
+    private int arrayHead = 0, index = -1;
+    private double maxValue;
     public int currentFrame;
     private void putFilteredBar(int layer, Bar[] b) {
         for(int x=0;x<b.length;++x) {
             if(b[x].bL.layer == layer) bar[arrayHead++] = b[x];
         }
     }
+    public BarDrawingTutor(CanvaStyle c, double[][] rawData, double maxVelocity) {
+        Interpolator.barPattern = c.barPattern;
+        Interpolator.barWidthRatio = c.barWidthRatio;
+        Interpolator.FPD = c.FPD;
+        Interpolator.rawData = rawData;
+        BarSwaper.maxVelocity = maxVelocity;
+        i = new Interpolator();
+        transparency = Interpolator.bLD.transparency;
+        barWidth = Interpolator.validWidth;
+    }
     public BarDrawingTutor(int currentFrame) {
         this.currentFrame = currentFrame;
         Bar[] b = Interpolator.bar[currentFrame];
         bar = new Bar[b.length];
+        maxValue = b[0].val;
         putFilteredBar(BarLocation.LAYER_BOTTOM, b);
         putFilteredBar(BarLocation.LAYER_MID, b);
         putFilteredBar(BarLocation.LAYER_TOP, b);
     }
     public boolean hasNext() {
-
+        return index+1<arrayHead;
     }
     public void next() {
-
+        index++;
     }
     public double getLocation() {
-
+        return bar[index].bL.location;
     }
     public double getTransparency() {
-
+        if(transparency.containsKey(bar[index].bL)) {
+            return transparency.get(bar[index].bL);
+        }
+        else return 0;
     }
     public int getBarID() {
-
+        return bar[index].id;
     }
     public double getValue() {
-        
+        return bar[index].val;
+    }
+    public double getDeltaValue() {
+        return bar[index].dVal;
+    }
+    public int getTotalFrame() {
+        return Interpolator.endFrame;
+    }
+    public double getPatternGap() {
+        double[] barWidth = Interpolator.barWidthRatio;
+        return barWidth[barWidth.length-1];
+    }
+    public double getBarWidth() {
+        return barWidth[getBarID()%barWidth.length];
+    }
+    public void seek(int index) {
+        this.index = index;
+    }
+    public double getMaxValue() {
+        return maxValue;
+    }
+    public void seek() {
+        seek(-1);
     }
 }
 class Interpolator {
     public static boolean swapping = true;
-    public static int FPS = 60;
     public static int FPD = 60; // Frames per data
     public static double[][] rawData; // rawdata[bar][data]
     public static Bar[][] bar; // data[frame][bar]
@@ -54,6 +92,7 @@ class Interpolator {
     public static int currentFrame, endFrame, barNum, dataNum;
     public static String[] barPattern = {"Default",""};
     public static double[] barWidthRatio = {0.5,-1};
+    public static double[] validWidth;
     public static double[] xScale = { 0, 1.0 };
     public Interpolator() {
         init();
@@ -64,7 +103,7 @@ class Interpolator {
         curBL = new BarLocation[barNum];
         double unallocatedSpace = 1;
         double unallocatedBar = 0;
-        double avgWidth;
+        double avgWidth, allocatedSpace = 0;
         int patternNum = barWidthRatio.length;
         int nonEmptyNum = patternNum;
         int x,i;
@@ -80,15 +119,18 @@ class Interpolator {
             if(barPattern[x].length()==0) nonEmptyNum--;
         }
         availablePos = new double[nonEmptyNum];
+        validWidth = new double[nonEmptyNum];
         for(x=0,i=0;x<patternNum;++x) {
             if(barPattern[x].length()!=0) {
-                availablePos[i++] = (((x==0)?0:barWidthRatio[x-1])+barWidthRatio[x])/2;
+                validWidth[i] = barWidthRatio[x];
+                availablePos[i++] = allocatedSpace + barWidthRatio[x]/2;
             }
+            allocatedSpace += barWidthRatio[x];
         }
-        for(x=0,i=0;x<barNum;++x,++i) {
-            curBL[x] = new BarLocation(x, i/nonEmptyNum + availablePos[i%nonEmptyNum]);
+        for(x=0;x<barNum;++x) {
+            curBL[x] = new BarLocation(x, x/nonEmptyNum + availablePos[x%nonEmptyNum]);
         }
-        xScale[1] = Math.ceil(i*1.0/nonEmptyNum);
+        xScale[1] = Math.ceil(x*1.0/nonEmptyNum);
     }
     private void init() {
         dataNum = rawData[0].length-1;
@@ -112,6 +154,7 @@ class Interpolator {
     }
     private void sortAndSwapBar(Bar[] bar, int currentFrame) { // BubbleSort
         int x,y;
+        int barNum = bar.length;
         for(x=0;x<barNum-1;++x) {
             boolean flag = true;
             for(y=0;y<barNum-1-x;++y) {
@@ -127,6 +170,7 @@ class Interpolator {
             if(flag) return;
         }
     }
+    
     private void interpolateBarValue() {
         int x,y,frame;
         double[] dVal = new double[barNum];
@@ -159,20 +203,6 @@ class Interpolator {
             bLD.nextFrame();
         }
     }
-    public static void loadConfig(String filename) {
-
-    }
-    public static void loadConfig() {
-
-    }
-    public static void main(String[] args) {
-        rawData = new double[3][];
-        rawData[0] = new double[]{3,4,7,8};
-        rawData[1] = new double[]{1,5,6,9};
-        rawData[2] = new double[]{2,3,4,5};
-        Interpolator i = new Interpolator();
-        System.out.println("hello");
-    }
 }
 class Bar {
     double val,dVal;
@@ -190,7 +220,7 @@ class Bar {
         else return new Bar(id, val, dVal, bL.copy());
     }
 }
-class BarLayoutDesigner {
+/*class BarLayoutDesigner {
     ArrayList<BarSwaper> activeSwaper = new ArrayList<>();
     ArrayList<int[]> waitingQueue = new ArrayList<>();
     HashMap<BarLocation, Double> transparency = new HashMap<>();
@@ -244,6 +274,11 @@ class BarLayoutDesigner {
         bar[index] = b;
         flag[index] = null;
     }
+    private double getTransparency(double progress) {
+        if(progress<0.5) return progress*2;
+        //else return 1-(progress-0.5)*2;
+        else return 2-2*progress;
+    }
     public BarLocation[] getLayout() {
         BarLocation[] rel = new BarLocation[bar.length];
         int i = 0;
@@ -257,9 +292,120 @@ class BarLayoutDesigner {
             BarSwapStatus bS = swaper.getCurrentLocation(currentFrame);
             rel[i++] = bS.a;
             rel[i++] = bS.b;
-            transparency.put(bS.a, bS.progress);
-            transparency.put(bS.b, bS.progress);
-            if(swaper.endFrame<=currentFrame || bS.progress==1) { // Free Useless Swaper
+            transparency.put(bS.a, getTransparency(bS.progress));
+            transparency.put(bS.b, getTransparency(bS.progress));
+            if(swaper.endFrame<currentFrame || bS.progress==1) { // Free Useless Swaper
+                applyExchange(bS.a);
+                applyExchange(bS.b);
+                activeSwaper.remove(x--);
+            }
+        }
+        return rel;
+    }
+    public void nextFrame() {
+        currentFrame++;
+        checkWaitingQueue();
+    }
+}*/
+class BarLayoutDesigner {
+    ArrayList<BarSwaper> activeSwaper = new ArrayList<>();
+    HashMap< Integer ,LinkedList<int[]> > waitingQueue = new HashMap<>();
+    HashMap<BarLocation, Double> transparency = new HashMap<>();
+    BarLocation[] bar;
+    int currentFrame = 0;
+    BarSwaper[] flag;
+    public BarLayoutDesigner(BarLocation[] bar) {
+        this.bar = bar.clone();
+        flag = new BarSwaper[bar.length];
+        for(int x=0;x<bar.length;++x) {
+            waitingQueue.put(bar[x].id, new LinkedList<int[]>() );
+        }
+    }
+    public static int searchBar(BarLocation[] b, int id) {
+        for(int x=0;x<b.length;++x) {
+            if(b[x].id==id) return x;
+        }
+        return -1;
+    }
+    private int searchBar(int id) {
+        return searchBar(bar, id);
+    }
+    public void swapBars(int startFrame, int id1, int id2) {
+        int i1 = searchBar(id1);
+        int i2 = searchBar(id2);
+        if(startFrame>currentFrame) {
+            //waitingQueue.add(new int[]{id1,id2,startFrame});
+            int[] form = new int[]{id1,id2,startFrame};
+            waitingQueue.get(id1).offer(form);
+            waitingQueue.get(id2).offer(form);
+        } else if(flag[i1]!=null || flag[i2]!=null) {
+            int endFrame = 0;
+            if(flag[i1]!=null) endFrame=flag[i1].endFrame+1;
+            if(flag[i2]!=null && flag[i2].endFrame+1>endFrame) {
+                endFrame = flag[i2].endFrame+1;
+            }
+            //waitingQueue.add(new int[]{id1,id2,endFrame});
+            int[] form = new int[]{id1,id2,endFrame};
+            waitingQueue.get(id1).offer(form);
+            waitingQueue.get(id2).offer(form);
+        }
+        else {
+            BarSwapStatus bS = new BarSwapStatus( bar[i1], bar[i2] );
+            flag[i1] = new BarSwaper(bS, startFrame);
+            flag[i2] = flag[i1];
+            activeSwaper.add(flag[i1]);
+        }
+    }
+    private void checkWaitingQueue() {
+        /*for(int x=0;x<waitingQueue.size();++x) {
+            int[] form = waitingQueue.get(x);
+            if(form[2]<=currentFrame) {
+                waitingQueue.remove(form);
+                swapBars(currentFrame, form[0], form[1]);
+            }
+        }*/
+        for(int x=0;x<bar.length;++x) {
+            LinkedList<int[]> list = waitingQueue.get(bar[x].id);
+            int[] form = list.peek();
+            if(form == null) continue;
+            LinkedList<int[]> a = waitingQueue.get(form[0]);
+            LinkedList<int[]> b = waitingQueue.get(form[1]);
+            if(a.peek()!=b.peek()) continue;
+            if(form[2]>currentFrame) continue;
+            int i1 = searchBar(form[0]);
+            int i2 = searchBar(form[1]);
+            if(flag[i1]!=null || flag[i2]!=null) continue;
+            a.poll();
+            b.poll();
+            swapBars(currentFrame, form[0], form[1]);
+        }
+    }
+    private void applyExchange(BarLocation b) {
+        int index = searchBar(b.id);
+        bar[index] = b;
+        flag[index] = null;
+    }
+    private double getTransparency(double progress) {
+        if(progress<0.5) return progress*2;
+        //else return 1-(progress-0.5)*2;
+        else return 2-2*progress;
+    }
+    public BarLocation[] getLayout() {
+        BarLocation[] rel = new BarLocation[bar.length];
+        int i = 0;
+        for(int x=0;x<bar.length;++x) {
+            if(flag[x]==null) {
+                rel[i++] = bar[x];
+            }
+        }
+        for(int x=0;x<activeSwaper.size();++x) {
+            BarSwaper swaper = activeSwaper.get(x);
+            BarSwapStatus bS = swaper.getCurrentLocation(currentFrame);
+            rel[i++] = bS.a;
+            rel[i++] = bS.b;
+            transparency.put(bS.a, getTransparency(bS.progress));
+            transparency.put(bS.b, getTransparency(bS.progress));
+            if(swaper.endFrame<currentFrame || bS.progress==1) { // Free Useless Swaper
                 applyExchange(bS.a);
                 applyExchange(bS.b);
                 activeSwaper.remove(x--);
@@ -276,7 +422,7 @@ class BarSwaper {
     int startFrame, endFrame;
     double distance, midFrame;
     final BarSwapStatus bars;
-    public static double maxVelocity = 0.15; // Move scaled pixel per frame
+    public static double maxVelocity = 0.02; // Move scaled pixel per frame
     private double k,k1,k2,b,dFrame;
 
     private double getDisplace(int currentFrame) {
@@ -296,7 +442,7 @@ class BarSwaper {
         this.startFrame = startFrame;
         distance = this.bars.b.location - this.bars.a.location;
         dFrame = 2*distance/maxVelocity;
-        endFrame = startFrame + (int) Math.round(dFrame);
+        endFrame = startFrame + (int) Math.floor(dFrame);
         midFrame = (startFrame+endFrame)/2.0;
         
         k1 = -maxVelocity/dFrame;

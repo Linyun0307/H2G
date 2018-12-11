@@ -15,7 +15,7 @@ public class AppTest
     @Test
     public void shouldAnswerWithTrue()
     {
-        Interpolator.main(null);
+        ThreadManager.main(null);
         assertTrue( true );
     }
 }

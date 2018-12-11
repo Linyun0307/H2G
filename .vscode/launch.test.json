@@ -1,0 +1,30 @@
+{
+    "run": {
+        "default": "",
+        "items": [
+            {
+                "name": "h2g",
+                "projectName": "h2g",
+                "workingDirectory": "c:\\Users\\Guton\\H2G",
+                "args": [],
+                "vmargs": [],
+                "env": {},
+                "preLaunchTask": ""
+            }
+        ]
+    },
+    "debug": {
+        "default": "",
+        "items": [
+            {
+                "name": "h2g",
+                "projectName": "h2g",
+                "workingDirectory": "c:\\Users\\Guton\\H2G",
+                "args": [],
+                "vmargs": [],
+                "env": {},
+                "preLaunchTask": ""
+            }
+        ]
+    }
+}

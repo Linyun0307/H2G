@@ -1,17 +1,2 @@
-h2g/Scalr.class
-h2g/CoordProjecter.class
-h2g/HistogramData.class
-h2g/CanvaStyle.class
-h2g/FrameCreator.class
 h2g/ConfigLoader$1.class
 h2g/Scalr$1.class
-h2g/App.class
-h2g/BarBasicSkin.class
-h2g/Scalr$Mode.class
-h2g/Scalr$Rotation.class
-h2g/StdDraw.class
-h2g/Scalr$Method.class
-h2g/BarGenerator.class
-h2g/ConfigLoader.class
-h2g/SigDraw.class
-h2g/ThreadManager.class

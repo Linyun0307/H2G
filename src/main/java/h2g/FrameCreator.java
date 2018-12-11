@@ -2,8 +2,10 @@ package h2g;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.image.BufferedImage;
 
 class FrameCreator {
+    BarDrawingTutor b;
     CanvaStyle c;
     HistogramData d;
     SigDraw bg, coord;
@@ -19,7 +21,8 @@ class FrameCreator {
     double rulerStep;
     int rulerGrade;
 
-    public FrameCreator(CanvaStyle c, HistogramData d) {
+    public FrameCreator(BarDrawingTutor b, CanvaStyle c, HistogramData d) {
+        this.b = b;
         this.c = c;
         this.d = d;
         init();
@@ -35,8 +38,8 @@ class FrameCreator {
         barNum = d.keys.length;
         rulerStep = d.rulerStep;
         rulerGrade = d.rulerGrade;
-        xScale[MIN] = -barSpace;
-        xScale[MAX] = barNum * 1.0;
+        xScale[MIN] = -b.getPatternGap();
+        xScale[MAX] = d.visiblePattern;
 
         cBorder[LEFT] = c.xProject - coordSize[WIDTH] / 2;
         cBorder[RIGHT] = c.xProject + coordSize[WIDTH] / 2;
@@ -62,8 +65,33 @@ class FrameCreator {
         if (c.hasFooter)
             plotFooter();
     }
-
+    private void plotKeys() {
+        
+        Font font = c.keysFont; // TO BE Customized
+        bg.setFont(font);
+        bg.setPenColor(c.keyColor);
+        final double y = cBorder[DOWN] - c.keysYoffset;
+        b.seek();
+        while(b.hasNext()) {
+            b.next();
+            bg.text(cp.getX(b.getLocation()), y, d.keys[b.getBarID()]);
+        }
+    }
     private void plotBars() {
+        b.seek();
+        while(b.hasNext()) {
+            b.next();
+            String skin = c.barSkin[ b.getBarID() ];
+            int[] barSize = new int[]{(int)(coord.factorX(b.getBarWidth())),coord.height};
+            //BarGenerator barSkin = DynamicLoader.getGenerator(skin, barSize, yValue);
+            //barSkin.setScale(yValue);
+            BarGenerator barSkin = new BarBasicSkin(barSize, yValue);
+            double x = b.getLocation();
+            double y = (yValue[MIN] + yValue[MAX])/2;
+            BufferedImage barImg = barSkin.getBarChart(b.currentFrame, b.getValue(), 0);
+            coord.picture(x, y, barImg);
+        }
+        bg.picture(c.xProject, c.yProject, coord.getBuffImg());
         /*
         double[] a = d.values;
         int n = a.length;
@@ -115,7 +143,7 @@ class FrameCreator {
     private int formatNumber(String[] mark, double[] y) { // TO BE Customized
         int decimalDigits = 0;
         String format = "%";
-        if (rulerStep < 0) decimalDigits = (int) (-Math.log10(rulerStep)) + 1;
+        if (rulerStep < 1) decimalDigits = (int)(Math.ceil(-Math.log10(rulerStep)));
         else decimalDigits = 0;
         if (rulerStep > 100000) format += ".5g";
         else format += "." + decimalDigits + "f";
@@ -128,17 +156,7 @@ class FrameCreator {
         return n;
     }
 
-    private void plotKeys() {
-        Font font = c.keysFont; // TO BE Customized
-        bg.setFont(font);
-        bg.setPenColor(c.keyColor);
-        final double y = cBorder[DOWN] - c.keysYoffset;
-        for (int i = 0; i < barNum; i++) {
-            if (d.keys[i].length() > 0) {
-                bg.text(cp.getX(i + barWidth / 2), y, d.keys[i]);
-            }
-        }
-    }
+    
 
     private void plotBorder() {
         bg.setPenColor(c.borderColor);
@@ -172,20 +190,4 @@ class FrameCreator {
     private final static int MAX = 1;
     private final static int WIDTH = 0;
     private final static int HEIGHT = 1;
-
-    public static void main(String[] args) throws Exception {
-        CanvaStyle c = new CanvaStyle();
-        c.loadConfig();
-        HistogramData d = new HistogramData();
-        d.keys = new String[]{"father", "father", "son"};
-        d.values = new double[]{0.0, 0.0, 0.0};
-        d.yValue[0] = 0;
-        d.yValue[1] = 1000.0;
-        d.rulerStep = 100;
-        d.rulerGrade = 10;
-        d.header = "Nothing left";
-        d.footer = "Nothing right";
-        FrameCreator fc = new FrameCreator(c, d);
-        fc.bg.save("test.jpg");
-    }
 }

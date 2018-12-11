@@ -23,7 +23,7 @@ public class BarBasicSkin extends BarGenerator {
                 '}';
     }
 
-    private boolean hasBarFrame = true;
+    private boolean hasBarFrame = false;
     private double frameSize = 0.01;
     public BarBasicSkin(int[] barSize, double[] scale) {
         super(barSize, scale);
