@@ -1,7 +1,6 @@
 package h2g;
 
 import java.awt.image.BufferedImage;
-import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -25,9 +24,11 @@ public class ThreadManager {
         d.yValue[0] = 0;
         d.yValue[1] = 1.0;
         d.visiblePattern = 1;
-        c.FPD = 180;
+        c.FPD = 360;// 180
+        c.FPS = 60;
+        c.rotated = true;
         RulerDrawingTutor r = new RulerDrawingTutor(d.yValue, 20);
-        BarDrawingTutor initB = new BarDrawingTutor(c,rawData,0.03); // For initialization
+        BarDrawingTutor initB = new BarDrawingTutor(c,rawData,0.02); // For initialization
         FrameCreator f;
         Timer timer = null;
         long startTime = System.currentTimeMillis();
@@ -70,9 +71,6 @@ public class ThreadManager {
         fc.bg.save("test.jpg");
         */
     }
-}
-class MultipleBuffer {
-    //public bufferA
 }
 class ImagePlayer extends TimerTask {
     private static BufferedImage onscreenImage;

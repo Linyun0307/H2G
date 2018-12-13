@@ -6,6 +6,21 @@
     "configurations": [
         {
             "type": "java",
+            "name": "CodeLens (Launch) - BarBasicSkin",
+            "request": "launch",
+<<<<<<< HEAD
+            "mainClass": "h2g.BarBasicSkin",
+=======
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopOnEntry": false,
+            "mainClass": "h2g.BarBasicSkin",
+            "args": "",
+>>>>>>> 83f4e1d2a6b5e7bcb3454f7d733fce23a7e696fb
+            "projectName": "h2g"
+        },
+        {
+            "type": "java",
             "name": "CodeLens (Launch) - ThreadManager",
             "request": "launch",
             "cwd": "${workspaceFolder}",

@@ -90,6 +90,11 @@ public class ConfigLoader {
         return new Color(getInt(pattern+".0"),getInt(pattern+".1"),getInt(pattern+".2"));
     }
 
+    Color getTColor(String pattern) throws Exception {
+        if (get(pattern) == null) return null;
+        return new Color(getInt(pattern + ".0"), getInt(pattern + ".1"), getInt(pattern + ".2"), getInt(pattern + ".3"));
+    }
+
     Font getFont(String pattern) throws Exception {
         String rulerFontName = getStr(pattern+".name");
         if (null == rulerFontName) return null;

@@ -15,7 +15,6 @@ public class AppTest
     @Test
     public void shouldAnswerWithTrue()
     {
-        ThreadManager.main(null);
         assertTrue( true );
     }
 }

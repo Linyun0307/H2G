@@ -1,6 +1,5 @@
 package h2g;
 
-import java.awt.Color;
 import java.awt.Font;
 import java.awt.image.BufferedImage;
 
@@ -48,8 +47,14 @@ class FrameCreator {
 
         bg = new SigDraw(bgSize[WIDTH], bgSize[HEIGHT], true);
         coord = new SigDraw(coordSize[WIDTH], coordSize[HEIGHT], false);
-        coord.setXscale(xScale[MIN], xScale[MAX]);
-        coord.setYscale(yValue[MIN], yValue[MAX]);
+        if(c.rotated) {
+            coord.setYscale(xScale[MIN], xScale[MAX]);
+            coord.setXscale(yValue[MIN], yValue[MAX]);
+        } else {
+            coord.setXscale(xScale[MIN], xScale[MAX]);
+            coord.setYscale(yValue[MIN], yValue[MAX]);
+        }
+        
         bg.clear(c.bgColor);
         cp = new CoordProjecter(bg, coord, c.xProject, c.yProject);
     }
@@ -71,25 +76,32 @@ class FrameCreator {
         bg.setFont(font);
         bg.setPenColor(c.keyColor);
         final double y = cBorder[DOWN] - c.keysYoffset;
+        final double x = cBorder[LEFT] - c.keysYoffset;
         b.seek();
         while(b.hasNext()) {
             b.next();
-            bg.text(cp.getX(b.getLocation()), y, d.keys[b.getBarID()]);
+            if(c.rotated) bg.text(x, cp.getY(b.getLocation()), d.keys[b.getBarID()]);
+            else bg.text(cp.getX(b.getLocation()), y, d.keys[b.getBarID()]);
         }
     }
     private void plotBars() {
         b.seek();
         while(b.hasNext()) {
             b.next();
-            String skin = c.barSkin[ b.getBarID() ];
-            int[] barSize = new int[]{(int)(coord.factorX(b.getBarWidth())),coord.height};
-            //BarGenerator barSkin = DynamicLoader.getGenerator(skin, barSize, yValue);
-            //barSkin.setScale(yValue);
-            BarGenerator barSkin = new BarBasicSkin(barSize, yValue);
-            double x = b.getLocation();
-            double y = (yValue[MIN] + yValue[MAX])/2;
-            BufferedImage barImg = barSkin.getBarChart(b.currentFrame, b.getValue(), 0);
-            coord.picture(x, y, barImg);
+            if(c.rotated) {
+                int[] barSize = new int[]{coord.width, (int)(coord.factorY(b.getBarWidth()))};
+                double y = b.getLocation();
+                double x = (yValue[MIN] + yValue[MAX])/2;
+                BufferedImage barImg = b.getBarImg(barSize, yValue);
+                coord.picture(x, y, barImg);
+            } else {
+                int[] barSize = new int[]{(int)(coord.factorX(b.getBarWidth())),coord.height};
+                double x = b.getLocation();
+                double y = (yValue[MIN] + yValue[MAX])/2;
+                BufferedImage barImg = b.getBarImg(barSize, yValue);
+                coord.picture(x, y, barImg);
+            }
+            
         }
         bg.picture(c.xProject, c.yProject, coord.getBuffImg());
         /*
@@ -116,27 +128,52 @@ class FrameCreator {
         Font font = c.rulerFont; // TO BE Customized
         bg.setFont(font);
         bg.setPenColor(c.rulerColor);
-        final int x0 = cBorder[LEFT] - 5, x1 = cBorder[LEFT] + 5;
-        final int x2 = cBorder[RIGHT] - 5, x3 = cBorder[RIGHT] + 5;
-        double[] rawY = new double[rulerGrade + 1];
-        String[] markL = new String[rulerGrade + 1];
-        String[] markR = new String[rulerGrade + 1];
+        if(c.rotated) {
+            final int y0 = cBorder[UP] - 5, y1 = cBorder[UP] + 5;
+            final int y2 = cBorder[DOWN] - 5, y3 = cBorder[DOWN] + 5;
+            double[] rawX = new double[rulerGrade + 1];
+            String[] markL = new String[rulerGrade + 1];
+            String[] markR = new String[rulerGrade + 1];
 
-        for (int i = 0; i <= rulerGrade; i++) {
-            rawY[i] = yValue[MIN] + i * rulerStep;
-            double y = cp.getY(rawY[i]);
-            if (c.hasRuler) bg.line(x0, y, x1, y);
-            if (c.hasRightRuler) bg.line(x2, y, x3, y);
-        }
-        int len = 0;
-        if (c.hasRuler) len = formatNumber(markL, rawY);
-        if (c.hasRightRuler) len = formatNumber(markR, rawY);
-        final int xl = cBorder[LEFT] - c.rulerXoffset;
-        final int xr = cBorder[RIGHT] + c.rulerXoffset;
-        for (int i = 0; i <= rulerGrade; i++) {
-            double y = cp.getY(yValue[MIN] + i * rulerStep);
-            if (c.hasRuler) bg.text(xl, y, String.format("%" + len + "s", markL[i]));
-            if (c.hasRightRuler) bg.text(xr, y, String.format("%-" + len + "s", markR[i]));
+            for (int i = 0; i <= rulerGrade; i++) {
+                rawX[i] = yValue[MIN] + i * rulerStep;
+                double x = cp.getX(rawX[i]);
+                if (c.hasRuler) bg.line(x, y0, x, y1);
+                if (c.hasRightRuler) bg.line(x, y2, x, y3);
+            }
+            int len = 0;
+            if (c.hasRuler) len = formatNumber(markL, rawX);
+            if (c.hasRightRuler) len = formatNumber(markR, rawX);
+            final int yu = cBorder[UP] + c.rulerXoffset;
+            final int yd = cBorder[DOWN] - c.rulerXoffset;
+            for (int i = 0; i <= rulerGrade; i++) {
+                double x = cp.getX(yValue[MIN] + i * rulerStep);
+                if (c.hasRuler) bg.text(x, yu, String.format("%" + len + "s", markL[i]));
+                if (c.hasRightRuler) bg.text(x, yd, String.format("%-" + len + "s", markR[i]));
+            }
+        } else {
+            final int x0 = cBorder[LEFT] - 5, x1 = cBorder[LEFT] + 5;
+            final int x2 = cBorder[RIGHT] - 5, x3 = cBorder[RIGHT] + 5;
+            double[] rawY = new double[rulerGrade + 1];
+            String[] markL = new String[rulerGrade + 1];
+            String[] markR = new String[rulerGrade + 1];
+
+            for (int i = 0; i <= rulerGrade; i++) {
+                rawY[i] = yValue[MIN] + i * rulerStep;
+                double y = cp.getY(rawY[i]);
+                if (c.hasRuler) bg.line(x0, y, x1, y);
+                if (c.hasRightRuler) bg.line(x2, y, x3, y);
+            }
+            int len = 0;
+            if (c.hasRuler) len = formatNumber(markL, rawY);
+            if (c.hasRightRuler) len = formatNumber(markR, rawY);
+            final int xl = cBorder[LEFT] - c.rulerXoffset;
+            final int xr = cBorder[RIGHT] + c.rulerXoffset;
+            for (int i = 0; i <= rulerGrade; i++) {
+                double y = cp.getY(yValue[MIN] + i * rulerStep);
+                if (c.hasRuler) bg.text(xl, y, String.format("%" + len + "s", markL[i]));
+                if (c.hasRightRuler) bg.text(xr, y, String.format("%-" + len + "s", markR[i]));
+            }
         }
     }
 

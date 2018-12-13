@@ -1,22 +1,18 @@
 package h2g;
 
-import java.util.HashMap;
-
 public class DynamicLoader 
 {
-    public static HashMap<String,BarGenerator> buffer = new HashMap<>();
-    public static BarGenerator getGenerator(String skinName, int[] barSize, double[] scale) {
-        String descriptor = skinName + "," + barSize[0] + "," + barSize[1];
-        BarGenerator rel = null;
-        if(buffer.containsKey(descriptor)) {
-            rel = buffer.get(descriptor);
-            rel.setScale(scale);
-            return rel;
+    public static BarBasicSkinStyle Basic1 = new BarBasicSkinStyle();
+    static {
+        try {
+            Basic1.loadConfig();
+        } catch (Exception e) {
+            System.out.println(e);
         }
-        else {
-            if(skinName.equals("Basic")) rel = new BarBasicSkin(barSize, scale);
-            buffer.put(descriptor, rel);
-            return rel;
-        }
+    }
+    public static BarGenerator get(String skinName, int[] barSize, double[] scale, boolean rotated) {
+        if("Basic".equals(skinName)) return new BarBasicSkin(barSize, scale, rotated);
+        if("Basic1".equals(skinName)) return new BarBasicSkin(Basic1, barSize, scale, rotated);
+        return null;
     }
 }

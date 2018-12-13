@@ -2,7 +2,6 @@ package h2g;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.util.Arrays;
 
 class CanvaStyle {
     // Background
@@ -14,12 +13,12 @@ class CanvaStyle {
     int xProject = bgSize[0] / 2;
     int yProject = bgSize[1] / 2;
     double blankRatio = 0.5;
-    boolean rotate = false;
+    boolean rotated = false;
 
     // Bar
     String[] barPattern = {"Bar1", "Bar2", "","Bar3","Bar4",""};
     double[] barWidthRatio = {-1,-1,-1,-1,-1,-1};
-    String[] barSkin = {"Basic","Basic","Basic","Basic"};
+    String[] barSkin = {"Basic","Basic1","Basic","Basic1"};
     int FPD = 60;
     int FPS = 60;
 

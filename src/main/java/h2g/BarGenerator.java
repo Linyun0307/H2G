@@ -10,16 +10,16 @@ public abstract class BarGenerator {
     public SigDraw baseIMG;
     public int[] barSize;
     public double[] scale;
-    public BarGenerator(int[] barSize, double[] scale) {
+    public boolean rotated;
+    public BarGenerator(int[] barSize, double[] scale, boolean rotated) {
         this.barSize = barSize;
         this.scale = scale;
+        this.rotated = rotated;
     };
     public void setScale(double[] scale) {
         this.scale = scale;
-        baseIMG.setYscale(scale[0], scale[1]);
+        if(rotated) baseIMG.setXscale(scale[0], scale[1]);
+        else baseIMG.setYscale(scale[0], scale[1]);
     }
-    public abstract BufferedImage getBarChart(int frame, double val);
-    public abstract BufferedImage getBarChart(int frame, double val1, double val2);
-    public abstract void loadConfig(String filename) throws Exception;
-    public abstract void loadConfig() throws Exception;
+    public abstract BufferedImage getBarChart(int frame ,String text, double... val);
 }

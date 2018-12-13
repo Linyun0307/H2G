@@ -3,8 +3,8 @@ package h2g;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.awt.image.BufferedImage;
 // import java.util.Random;
-import java.lang.Thread;
 public class BarDrawingTutor {
     private static Interpolator i;
     private static HashMap<BarLocation, Double> transparency;
@@ -12,6 +12,7 @@ public class BarDrawingTutor {
     private Bar[] bar;
     private int arrayHead = 0, index = -1;
     private double maxValue;
+    private static CanvaStyle c;
     public int currentFrame;
     private void putFilteredBar(int layer, Bar[] b) {
         for(int x=0;x<b.length;++x) {
@@ -19,12 +20,13 @@ public class BarDrawingTutor {
         }
     }
     public BarDrawingTutor(CanvaStyle c, double[][] rawData, double maxVelocity) {
+        BarDrawingTutor.c = c;
         Interpolator.barPattern = c.barPattern;
         Interpolator.barWidthRatio = c.barWidthRatio;
         Interpolator.FPD = c.FPD;
         Interpolator.rawData = rawData;
         BarSwaper.maxVelocity = maxVelocity;
-        i = new Interpolator();
+        BarDrawingTutor.i = new Interpolator();
         transparency = Interpolator.bLD.transparency;
         barWidth = Interpolator.validWidth;
     }
@@ -50,7 +52,13 @@ public class BarDrawingTutor {
         if(transparency.containsKey(bar[index].bL)) {
             return transparency.get(bar[index].bL);
         }
-        else return 0;
+        else return 1;
+    }
+    public BufferedImage getBarImg(int[] barSize, double[] yValue) {
+        String skin = c.barSkin[ getBarID() ];
+        BarGenerator barSkin = DynamicLoader.get(skin, barSize, yValue, c.rotated);
+        barSkin.baseIMG.enableTransparent((float)getTransparency());
+        return barSkin.getBarChart(currentFrame, "", getValue());
     }
     public int getBarID() {
         return bar[index].id;
@@ -97,7 +105,7 @@ class Interpolator {
     public Interpolator() {
         init();
         interpolateBarValue();
-        interpolateBarLocation();
+        if(swapping) interpolateBarLocation();
     }
     private void parseBarPattern() {
         curBL = new BarLocation[barNum];
@@ -188,7 +196,7 @@ class Interpolator {
                 for(y=0;y<barNum;++y) {
                     curBar[y].val += dVal[curBar[y].id];
                 }
-                sortAndSwapBar(curBar, FPD*x + frame);
+                if(swapping) sortAndSwapBar(curBar, FPD*x + frame);
                 bar[FPD*x + frame] = deepCopyBarArray(curBar);
             }
         }
@@ -386,9 +394,9 @@ class BarLayoutDesigner {
         flag[index] = null;
     }
     private double getTransparency(double progress) {
-        if(progress<0.5) return progress*2;
+        if(progress<0.5) return 1-progress*2;
         //else return 1-(progress-0.5)*2;
-        else return 2-2*progress;
+        else return -1+2*progress;
     }
     public BarLocation[] getLayout() {
         BarLocation[] rel = new BarLocation[bar.length];
