@@ -1,0 +1,45 @@
+{
+"segColor1": [46, 204, 113
+],
+"segColor2": [52, 152, 219
+],
+"segColor3": [155, 89, 182
+],
+"segColor4": [52, 73, 94
+],
+"segColor5": [22, 160, 133
+],
+"segColor6": [39, 174, 96
+],
+"segColor7": [41, 128, 185
+],
+"segColor8": [142, 68, 173
+],
+"segColor9": [44, 62, 80
+],
+"segColor10": [241, 196, 15
+],
+"segColor11": [230, 126, 34
+],
+"segColor12": [231, 76, 60
+],
+"segColor13": [236, 240, 241
+],
+"segColor14": [149, 165, 166
+],
+"segColor15": [243, 156, 18
+],
+"segColor16": [211, 84, 0
+],
+"segColor17": [192, 57, 43
+],
+"segColor18": [189, 195, 199
+],
+"segColor19": [127, 140, 141],
+"segColor20": [192, 57, 43],
+"segColor21": [236, 240, 241],  
+"frameColor": [0,255,0],
+"isBarFilled": true,
+"hasBarFrame": false,
+"frameSize": 0.02
+}

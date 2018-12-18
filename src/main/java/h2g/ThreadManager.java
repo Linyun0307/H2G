@@ -1,6 +1,8 @@
 package h2g;
 
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -12,45 +14,84 @@ import javax.swing.JLabel;
 import java.awt.Graphics2D;
 
 public class ThreadManager {
-    
-    public static void main(String[] args) {
-        CanvaStyle c = new CanvaStyle();
-        HistogramData d = new HistogramData();
-        double[][] rawData = new double[4][];
-        rawData[0] = new double[]{4,5,9,21,30,70,110,400,400,800,2000,9000};
-        rawData[1] = new double[]{3,6,10,23,50,100,200,300,400,1000,3000,8000};
-        rawData[2] = new double[]{2,7,11,22,40,90,300,350,500,1200,4000,7000};
-        rawData[3] = new double[]{1,8,12,24,60,80,100,120,600,700,5000,6000};
-        d.yValue[0] = 0;
-        d.yValue[1] = 1.0;
-        d.visiblePattern = 1;
-        c.FPD = 360;// 180
-        c.FPS = 60;
-        c.rotated = true;
-        RulerDrawingTutor r = new RulerDrawingTutor(d.yValue, 20);
-        BarDrawingTutor initB = new BarDrawingTutor(c,rawData,0.02); // For initialization
-        FrameCreator f;
-        Timer timer = null;
-        long startTime = System.currentTimeMillis();
-        //BufferedImage[] bf = new BufferedImage[initB.getTotalFrame()];
-        ConcurrentLinkedQueue<BufferedImage> buffer = new ConcurrentLinkedQueue<>();
-        for(int x=0;x<initB.getTotalFrame();++x) {
-            if(x>200 && timer==null) {
-                timer = new Timer();
-                timer.schedule(new ImagePlayer(buffer, c.bgSize), 0, 1000/c.FPS);
+    public static CanvaStyle canvaStyle;
+    public static HistogramData histogramData;
+    public static RulerDrawingTutor rulerDrawingTutor;
+    public static BarDrawingHelper barDrawingHelper;
+    public static FrameCreator frameCreator;
+    public static BarDrawingTutor barDrawingTutor;
+    public static Timer timer = null;
+    public static ConcurrentLinkedQueue<BufferedImage> buffer = new ConcurrentLinkedQueue<>();
+    public static LegendDrawer legendDrawer;
+
+    public static BarDrawingTutor[] bDTbuffer;
+    public static void bufferBarDrawingTutor() {
+        bDTbuffer = new BarDrawingTutor[barDrawingHelper.getTotalFrame()];
+        for(int x=0;x<barDrawingHelper.getTotalFrame();++x) {
+            if(canvaStyle.isStackedBar && barDrawingHelper instanceof StackedBarDrawingHelper) {
+                bDTbuffer[x] = ((StackedBarDrawingHelper) barDrawingHelper).getStackedTutor(x);
             }
-            BarDrawingTutor b = new BarDrawingTutor(x);
-            d.yValue[1] = b.getMaxValue()*1.01;
-            r.setYmaxValue(d.yValue[1]);
-            d.rulerGrade = r.getRulerGrade();
-            d.rulerStep = r.getRulerStep();
-            f = new FrameCreator(b, c, d);
+            else bDTbuffer[x] = barDrawingHelper.getTutor(x);
+        }
+    }
+    public static BarDrawingTutor fetchBarDrawingTutor(int currentFrame) {
+        BarDrawingTutor rel = bDTbuffer[currentFrame];
+        bDTbuffer[currentFrame] = null;
+        return rel;
+    }
+
+    public static void refreshRuler(double maxValue) {
+        maxValue += Math.abs(maxValue*canvaStyle.expandRatio);
+        histogramData.yValue[1] = maxValue;
+        rulerDrawingTutor.setYmaxValue(histogramData.yValue[1]);
+        histogramData.rulerGrade = rulerDrawingTutor.getRulerGrade();
+        histogramData.rulerStep = rulerDrawingTutor.getRulerStep();
+    }
+    public static void main(String[] args) throws Exception {
+        DataLoader dataLoader = new DataLoader();
+        double[][] rawData = dataLoader.loadRawData();
+        canvaStyle = new CanvaStyle();
+        canvaStyle.loadConfig();
+        histogramData = new HistogramData();
+        histogramData.loadConfig();
+        histogramData.keys = dataLoader.loadKeys();
+        rulerDrawingTutor = new RulerDrawingTutor(canvaStyle, histogramData);
+        
+        if(canvaStyle.isStackedBar) barDrawingHelper = new StackedBarDrawingHelper(canvaStyle, histogramData, rawData);
+        else barDrawingHelper = new BarDrawingHelper(canvaStyle, rawData);
+
+        legendDrawer = new LegendDrawer(canvaStyle, histogramData);
+        canvaStyle.legendImg = legendDrawer.getLegend();
+        long startTime = System.currentTimeMillis();
+        long endTime;
+        double averageFPS;
+        
+        bufferBarDrawingTutor();
+
+        if(!canvaStyle.enableDynamicRuler) {
+            refreshRuler( bDTbuffer[bDTbuffer.length-1].getMaxValue() );
+        }
+
+        for(int currentFrame=0;currentFrame<barDrawingHelper.getTotalFrame();++currentFrame) {
+            if(currentFrame+1>=canvaStyle.FPD && timer==null) {
+                timer = new Timer();
+                timer.schedule(new ImagePlayer(buffer, canvaStyle.bgSize), 0, 1000/canvaStyle.FPS);
+            }
+            barDrawingTutor = fetchBarDrawingTutor(currentFrame);
+            if(canvaStyle.enableDynamicRuler) {
+                refreshRuler(barDrawingTutor.getMaxValue());
+            }
+            frameCreator = new FrameCreator(barDrawingTutor, canvaStyle, histogramData);
             //f.bg.save(x+".jpg");
             //bf[x] = f.bg.getBuffImg();
-            buffer.offer(f.bg.getBuffImg());
-            long endTime = System.currentTimeMillis();
-            System.out.printf("Frame:%d Average FPS: %.3f\n",x,x/((endTime-startTime)/1000.0));
-            //System.out.println("Frame"+x+" has been created!");
+            buffer.offer( frameCreator.bg.getBuffImg() );
+             
+            if(currentFrame%canvaStyle.FPD==0) {
+                endTime = System.currentTimeMillis();
+                averageFPS = canvaStyle.FPD/((endTime-startTime)/1000.0);
+                System.out.printf("Frame:%d Average FPS: %.3f\n",currentFrame,averageFPS);
+                startTime = System.currentTimeMillis();
+            }
         }
         
         
@@ -104,8 +145,8 @@ class ImagePlayer extends TimerTask {
     @Override
     public void run() {
         if(buffer.isEmpty()) {
-            onscreen.dispose();
-            this.cancel();
+            // onscreen.dispose();
+            // this.cancel();
             return;
         }
         show(buffer.poll());

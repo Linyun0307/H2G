@@ -15,7 +15,6 @@ class FrameCreator {
     int[] bgSize;
     int[] coordSize;
     int[] cBorder = new int[4];
-    double barWidth, barSpace;
     int barNum;
     double rulerStep;
     int rulerGrade;
@@ -32,8 +31,6 @@ class FrameCreator {
         yValue = d.yValue;
         bgSize = c.bgSize;
         coordSize = c.coordSize;
-        barSpace = c.blankRatio;
-        barWidth = 1.0 - barSpace;
         barNum = d.keys.length;
         rulerStep = d.rulerStep;
         rulerGrade = d.rulerGrade;
@@ -47,6 +44,10 @@ class FrameCreator {
 
         bg = new SigDraw(bgSize[WIDTH], bgSize[HEIGHT], true);
         coord = new SigDraw(coordSize[WIDTH], coordSize[HEIGHT], false);
+
+        bg.enableTransparent((float)c.bgTransparency);
+        coord.enableTransparent((float)c.coordTrantransparency);
+
         if(c.rotated) {
             coord.setYscale(xScale[MIN], xScale[MAX]);
             coord.setXscale(yValue[MIN], yValue[MAX]);
@@ -69,59 +70,64 @@ class FrameCreator {
             plotHeader();
         if (c.hasFooter)
             plotFooter();
+        if (c.legendImg != null) {
+            plotLegend();
+        }
+    }
+    private void plotLegend() {
+        bg.picture(c.LegendX, c.LegendY, c.legendImg);
     }
     private void plotKeys() {
         
         Font font = c.keysFont; // TO BE Customized
         bg.setFont(font);
-        bg.setPenColor(c.keyColor);
-        final double y = cBorder[DOWN] - c.keysYoffset;
-        final double x = cBorder[LEFT] - c.keysYoffset;
+        bg.setPenColor(c.keysColor);
+        
+        
         b.seek();
         while(b.hasNext()) {
             b.next();
-            if(c.rotated) bg.text(x, cp.getY(b.getLocation()), d.keys[b.getBarID()]);
-            else bg.text(cp.getX(b.getLocation()), y, d.keys[b.getBarID()]);
+            double x,y;
+            if(b.getLocation()>d.visiblePattern) continue;
+            if(c.rotated) {
+                x = cBorder[LEFT] - c.keysYoffset;
+                y = cp.getY(b.getLocation());
+                
+            }
+            else {
+                y = cBorder[DOWN] - c.keysYoffset;
+                x = cp.getX(b.getLocation());
+            }
+            bg.setPenColor(b.getTextColor());
+            bg.text(x, y, d.keys[b.getBarID()]);
         }
     }
     private void plotBars() {
         b.seek();
         while(b.hasNext()) {
             b.next();
+            int[] barSize;
+            double x,y;
             if(c.rotated) {
-                int[] barSize = new int[]{coord.width, (int)(coord.factorY(b.getBarWidth()))};
-                double y = b.getLocation();
-                double x = (yValue[MIN] + yValue[MAX])/2;
-                BufferedImage barImg = b.getBarImg(barSize, yValue);
-                coord.picture(x, y, barImg);
+                barSize = new int[]{coord.width, (int)(coord.factorY(b.getBarWidth()))};
+                y = b.getLocation();
+                x = (yValue[MIN] + yValue[MAX])/2;
             } else {
-                int[] barSize = new int[]{(int)(coord.factorX(b.getBarWidth())),coord.height};
-                double x = b.getLocation();
-                double y = (yValue[MIN] + yValue[MAX])/2;
-                BufferedImage barImg = b.getBarImg(barSize, yValue);
-                coord.picture(x, y, barImg);
+                barSize = new int[]{(int)(coord.factorX(b.getBarWidth())),coord.height};
+                x = b.getLocation();
+                y = (yValue[MIN] + yValue[MAX])/2;
             }
-            
+            BufferedImage barImg = null;
+            String[] barText = new String[1];
+            formatNumber(barText, new double[]{b.getValue()} );
+
+            if(c.isStackedBar && b instanceof StackedBarDrawingTutor) {
+                barImg = ((StackedBarDrawingTutor) b).getStackedBarImg(barSize, yValue, barText[0] );
+            }
+            else barImg = b.getBarImg(barSize, yValue, barText[0]);
+            coord.picture(x, y, barImg);
         }
         bg.picture(c.xProject, c.yProject, coord.getBuffImg());
-        /*
-        double[] a = d.values;
-        int n = a.length;
-        setHistogramScale(n);
-        if (f.isBarFilled) {
-            StdDraw.setPenColor(f.barFillColor);
-            for (int i = 0; i < n; i++) {
-                StdDraw.filledRectangle(i, a[i] / 2, 0.25, a[i] / 2);
-                // (x, y, halfWidth, halfHeight)
-            }
-        }
-        if (f.hasBarFrame) {
-            StdDraw.setPenColor(f.barFrameColor);
-            for (int i = 0; i < n; i++) {
-                StdDraw.rectangle(i, a[i] / 2, 0.25, a[i] / 2);
-                // (x, y, halfWidth, halfHeight)
-            }
-        }*/
     }
 
     private void plotRuler() {
@@ -129,8 +135,19 @@ class FrameCreator {
         bg.setFont(font);
         bg.setPenColor(c.rulerColor);
         if(c.rotated) {
-            final int y0 = cBorder[UP] - 5, y1 = cBorder[UP] + 5;
-            final int y2 = cBorder[DOWN] - 5, y3 = cBorder[DOWN] + 5;
+            int y0,y1,y2,y3;
+            if(c.extendScaleLine) {
+                y0 = cBorder[DOWN];
+                y1 = cBorder[UP] + 5;
+                y2 = cBorder[DOWN] - 5;
+                y3 = cBorder[UP];
+            } else {
+                y0 = cBorder[UP] - 5;
+                y1 = cBorder[UP] + 5;
+                y2 = cBorder[DOWN] - 5;
+                y3 = cBorder[DOWN] + 5;
+            }
+            
             double[] rawX = new double[rulerGrade + 1];
             String[] markL = new String[rulerGrade + 1];
             String[] markR = new String[rulerGrade + 1];
@@ -152,8 +169,19 @@ class FrameCreator {
                 if (c.hasRightRuler) bg.text(x, yd, String.format("%-" + len + "s", markR[i]));
             }
         } else {
-            final int x0 = cBorder[LEFT] - 5, x1 = cBorder[LEFT] + 5;
-            final int x2 = cBorder[RIGHT] - 5, x3 = cBorder[RIGHT] + 5;
+            int x0,x1,x2,x3;
+            if(c.extendScaleLine) {
+                x0 = cBorder[LEFT] - 5;
+                x1 = cBorder[RIGHT];
+                x2 = cBorder[LEFT];
+                x3 = cBorder[RIGHT] + 5;
+            } else {
+                x0 = cBorder[LEFT] - 5;
+                x1 = cBorder[LEFT] + 5;
+                x2 = cBorder[RIGHT] - 5;
+                x3 = cBorder[RIGHT] + 5;
+            }
+            
             double[] rawY = new double[rulerGrade + 1];
             String[] markL = new String[rulerGrade + 1];
             String[] markR = new String[rulerGrade + 1];

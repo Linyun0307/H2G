@@ -13,12 +13,14 @@ public class RulerDrawingTutor {
         nFactor = 5;
         if((yValue[1]-yValue[0])/(5*rulerStep)<=maxRulerGrade) return;
             
-        rulerStep*=10;
+         rulerStep*=10;
+        //rulerStep*=2;
         selectNfactor();
     }
-    public RulerDrawingTutor(double[] yValue, int maxRulerGrade) {
-        this.maxRulerGrade = maxRulerGrade;
-        this.yValue = yValue.clone();
+    //public RulerDrawingTutor(double[] yValue, int maxRulerGrade) {
+    public RulerDrawingTutor(CanvaStyle canvaStyle, HistogramData histogramData) {
+        this.maxRulerGrade = canvaStyle.maxRulerGrade;
+        this.yValue = histogramData.yValue.clone();
         rulerStep = (yValue[1]-yValue[0])/maxRulerGrade;
         rulerStep = Math.pow(10, Math.floor( Math.log10(rulerStep)) );
         selectNfactor();

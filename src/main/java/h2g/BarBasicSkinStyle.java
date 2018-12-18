@@ -1,11 +1,15 @@
 package h2g;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.util.ArrayList;
 
 public class BarBasicSkinStyle{
     public Color[] segColor = {Color.RED, Color.YELLOW, Color.BLUE};
     public Color frameColor = Color.GREEN;
+    public Color fontColor = null;
+    public Font textFont = new Font("Microsoft YaHei Light", 1, 15);
+    public int textOffset = 50;
     public boolean isBarFilled = true;
     public boolean hasBarFrame = false;
     public double frameSize = 0.01;
@@ -26,6 +30,12 @@ public class BarBasicSkinStyle{
         hasBarFrame = loader.getBool("hasBarFrame");
         double _frameSize = loader.getDouble("frameSize");
         if (_frameSize != 0) frameSize = _frameSize;
+        
+        textFont = loader.setFont(textFont, "textFont");
+        fontColor = this.segColor[0];
+        fontColor = loader.setColor(fontColor, "fontColor");
+        textOffset = loader.setInt(textOffset, "textOffset");
+        
     }
     public void loadConfig() throws Exception {
         loadConfig("BarBasicSkin.json");

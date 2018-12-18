@@ -1,88 +1,118 @@
 # Project H2G
+
 This project has nothing right. 
 This project has nothing left. 
 
 ### Lock 
-| Class Name | Description | Status |
+| Name | Description | Status |
 | --- | --- | --- |
-| BarDrawingTutor | 这里面的代码已经快要成为意大利面了 | Locked |
+| BarDrawingTutor.java | 这里面的代码已经快要成为意大利面了 | Locked |
+| Data.json | 所有数据json全部按照Data.json书写，不再修改 | Locked |
 
 ### TODO LIST
-| Contributor | Class Name | Content | DDL | Status |
-| --- | --- | --- | --- | --- |
-| Whexy | FrameCreator | ~~参考网上的图片，设计函数，绘制直方图的其他要素~~ | N/A | Abort |
-| Whexy | FrameCreator | ~~思考旋转坐标系的方法~~ |  | Abort |
-| Whexy | N/A | ~~直接提交Json生成器的代码~~ | N/A | Abort |
-| Whexy | SigDraw | ~~添加图片高斯模糊函数，要求风格与StdDraw函数一致，并测试两图片叠加的情况~~ |  | Abort |
-| Whexy | N/A | 修改BarFlatUI为Json | N/A | Working |
-| Linyun | N/A | 搜集进度条素材，思考切割方式，编写一个继承BarGenerator的类，生成进度条图像 | N/A | Working |
-| Linyun | N/A | 编写新的CanvasStyle的Json，尝试美化界面 | N/A | Working |
+项目尾期，按照重要性和难易度简单区分扫尾工作：
+
+| 工作内容                                                     | 重要性 | 复杂度 |
+| ------------------------------------------------------------ | ------ | ------ |
+|显示图例，增加显示图例的开关和图例显示的的坐标、缩放因数，并完成json适配|SS|中|
+| 制作barUI的json，并且在DynamicLoader中加入对应的BarBasicSkinStyle类 | S      | 低     |
+| 寻找数据，制作data.json                                      | S      | 低     |
+| 对于TaskA,TaskB,TaskC三个任务最终确定三组json                | S      | 低     |
+| 准备答辩PPT                                                  | A      | 中     |
+| 非纯色高级skin的代码编写                                     | B      | 中高  |
+
 
 ### Milestone
-| Contributor | Class Name | Content | DoneDate | Status |
-| --- | --- | --- | --- | --- |
-| All members | N/A | 举办第一次组会 | 12.7 | Done |
+
+| Contributor | Content | DoneDate |
+| --- | --- | --- |
+| All members | 举办第一次组会 | 12.7 |
+| All members | 举办第二次组会 | 12.14 |
 
 # Data Structure
+
 | Path | Class Name | Description |
 | --- | --- | --- |
-| \ | HistogramData | 画布的原始数据，用于存放相对动态的数据 |
-| \ | CanvaStyle | 画布的样式，用于存放相对静态的数据 |
-| \ | BarBasicSkinStyle | |
+| \ | HistogramData | 数据模板 |
+| \ | CanvaStyle | 样式模板 |
+| \ | rawData | 数据 |
+| \ | BarBasicSkinStyle | 皮肤 |
 
 # Class
+
+## DataLoader
+负责读取data.json内的数据部分，处理为rawData移交给ThreadManager。
+
+## LegendDrawer
+负责通过data.json内的部分数据生成图例。
+
+| Primary API Name | Parameter | Description |
+| --- | --- | --- |
+| loadConfig() | String pattern | **必须**，导入数据并解析 |
+| getLegend() | / | 获得一张BufferImage格式的完整图例 |
+| getBarLegend() | int id | 获得持有某id的，单独bar的图例 |
+
 ## FrameCreator
 基于Reference的HistogramA的单帧生成器
 
 ### Update Log
+#### Version 2 rev.B (2018.12.15)
+1. 接入StackedBar的绘制方法
 #### Version 2 rev.A (2018.12.13)
 1. 完成BarDrawingTutor接口的对接
 2. 完成坐标系旋转相关代码
-
 #### Version 1 rev.B+ (2018.12.1)
-
 #### Version 1 rev.B (2018.11.30)
 修复Bug
 #### Version 1 rev.A (2018.11.29)
 
 ## RulerDrawingTutor
 自动计算rulerGrade和rulerStep以指导FrameCreator绘制Ruler
+
 | Primary API Name | Parameter | Description |
 | --- | --- | --- |
-| RulerDrawingTutor() | double[] yValue, int maxRulerGrade | 实例化，传入比例尺和最大刻度数量 |
+| RulerDrawingTutor() | CanvaStyle canvaStyle, HistogramData histogramData | 实例化，传入比例尺和最大刻度数量 |
 | setYmaxValue() | double yMaxValue | 指定刻度的最大值 |
 | getRulerStep() | | 自适应并计算rulerStep |
 | getRulerGrade() | | 自适应并计算rulerGrade |
 
 ### Note:自适应只适应增大的情况，不适应缩小的情况
-
+### Update Log
+#### Version 1 rev.C (2018.12.14)
+1. 调整接口
 
 ## BarDrawingTutor
 指导FrameCreator绘制Bar
 
 ### Primary API Reference 
+
 | Primary API Name | Parameter | Description |
 | --- | --- | --- |
-| BarDrawingTutor() | CanvaStyle c, double[][] rawData, double maxVelocity | 传入参数完成静态初始化(仅需初始化一次), maxVelocity:最大交换速率 |
-| | int currentFrame | 实例化并切换到指定帧 |
 | hasNext() || 判断当前帧是否还有下一个需要绘制的Bar |
 | next() || 切换到下一个需要绘制的Bar |
 | getLocation() || 获取Bar的坐标 |
 | getBarImg() || 获得Bar的BufferedImage，已经预设好皮肤，透明度和长度 |
 其余的方法请查看源码
 
-### InnerClass
-| InnerClass | Description |
+### Related Class
+
+| Related Class | Description |
 | --- | --- |
+| BarDrawingHelper | 用于生成特定帧的BarDrawingTutor |
 | Interpolator | 生成数值和坐标的插值，调用BarLayoutDesigner生成坐标的插值 |
 | BarLayoutDesigner | 队列化处理Bar交换事件，避免多重交换，生成Bar的横坐标 |
 | BarSwaper | 利用非线性函数计算和平移Bar的坐标以实现Bar的交换 |
 | BarSwapStatus | 含两个BarLocation和交换进度的数据结构 |
 | BarLocation | 含Bar ID,所在图层和坐标的数据结构 |
+| StackedBarDrawingHelper | 为StackedBar调整的BarDrawingHelper |
+| StackedBarDrawingTutor | 为StackedBar调整的BarDrawingTutor |
 
 ### InnerClass Primary API Reference
+
 | Class Name | API Name | Description |
 | --- | --- | --- |
+| BarDrawingHelper | BarDrawingHelper | 初始化 |
+| | getTutor | 获得特定帧的BarDrawingTutor |
 | Interplator | parseBarPattern | 解析BarPattern(在CanvaStyle里定义),分配Bar初始坐标 |
 | | interpolateBarValue | 对值插值 |
 | | interpolateBarLocation | 调用BarLocationDesigner对坐标插值 |
@@ -90,7 +120,7 @@ This project has nothing left.
 | BarLayoutDesigner | swapBars | 设置交换事件 |
 | | getTransparency | 根据交换进度计算透明度 |
 | | getLayout | 调用BarSwaper获得当前帧所有Bar的坐标 |
-| | nextFrame | 切换到下一帧 | 
+| | nextFrame | 切换到下一帧 |
 | | checkWaitingQueue | 检查等待队列并激活等待态的事件 |
 | BarSwaper | getDisplace | 计算Bar的偏移(更改插值函数同时需要调整构造器) |
 | | getProgress | 获取Bar的交换进度 |
@@ -98,6 +128,12 @@ This project has nothing left.
 
 
 ### Update Log
+#### Version 2 rev.C (2018.12.15)
+1. 完成StackedBar特化BarDrawingHelper和BarDrawingTutor的编写
+2. 修复起始值不为0时出现的Bug
+3. 为Interpolator添加用于辅助绘制StackedBar的开关
+#### Version 2 rev.B (2018.12.14)
+1. 重新编写构造方法，使得调用方法更合理
 #### Version 2 rev.A (2018.12.9)
 1. 重新设计交换事件冲突处理机制
 #### Version 1 rev.C (2018.12.7)
@@ -124,6 +160,10 @@ This project has nothing left.
 | ImagePlayer() | ConcurrentLinkedQueue<BufferedImage> buffer, int[] bgSize | 传入FIFO缓冲区(线程安全)，初始化播放器 |
 
 ### Update Log
+#### Version 1 rev.C (2018.12.15)
+1. 接入StackedBar的绘制方法
+#### Version 1 rev.B (2018.12.14)
+1. 整理代码
 #### Version 1 rev.A (2018.12.8)
 1. 完成基本处理流程的设计，基本实现动画化
 
@@ -168,6 +208,9 @@ This project has nothing left.
 3. 可变参数的参数数量不做要求，带动画效果的BarGenerator可以只考虑一个参数的情况
 
 ### Update Log
+#### Version 2 rev.B (2018.12.15)
+1. 修复起始值不为0时出现的Bug
+
 #### Version 2 rev.A (2018.12.12)
 0. 重新修订BarGenerator的设计规范
 1. 增加使用扁平化配色方案的BarFlatUISkin样式
@@ -187,13 +230,53 @@ This project has nothing left.
 
 
 
+## HistogramData & DataLoader & CanvaStyle
+
+数据相关的三个类，分别对应数据样式、数据内容、模板样式。均已通过json实现数据的调配。
+
+### Update Log
+
+#### Version 3 (2018.12.16)
+
+json结构重大修订，并适配了新的json结构。
+
+#### Version 2 (2018.12.15)
+
+1. 合并所有数据相关的json为 "Data.json" 
+
+2. 对新增的参数增加json支持
+
+#### Version 1 rev.D (2018.12.15)
+
+1. 添加参数
+
+#### Version 1 rev.C (2018.12.14)
+
+1. 添加参数
+
+#### Version 1 rev.B (2018.12.1)
+
+1. 修复颜色自定义无效的bug
+2. 代码架构优化
+3. json模板结构优化，并统一命名规范
+
+#### Version 1 rev.A (2018.11.30)
+
+使用json获取CanvaStyle数据
+
+
+
 ## ConfigLoader
 
 ConfigLoader基于Json库的辅助程序，简化了读取操作
 
 ### API Reference
 1. ConfigLoader(String fileName) 构造器
-2. get...(String path) 读取指定位置的值
+2. get...(String path) 读取指定位置的值 
+   1. 基础类均可直接读取
+   2. 复杂类的拓展模板模仿getDoubleArray()函数
+   3. getTColor()已过时
+3. set...(Object init, String path) 读取指定位置的值，若json表中不存在这个值，将会返回指定的init，同时在控制台输出json缺省提醒。
 
 ### Syntax of path
 | 符号 | 含义 | 适用类 |
@@ -202,14 +285,15 @@ ConfigLoader基于Json库的辅助程序，简化了读取操作
 | Digit | List的下标 | JsonArray |
 | Token | Map的Key | JsonObject |
 
-#### Example
-ConfigLoader cL = new ConfigLoader("facebook.json"); 
-
-String str = cL.getStr("data.1.message");  
-
-Color color = cL.getColor("bar.color1");
-
 ### Update Log
+
+#### Version 10 (2018.12.16)
+
+增加了对默认值的支持。从此版本开始，项目中所有json处理都由get...(String pattern)更改为set..(Object init, String pattern)。
+
+#### Version 1 rev.C (2018.12.15)
+
+增加了获取两种基本类的方法
 
 #### Version 1 rev.B (2018.12.1)
 
@@ -269,16 +353,3 @@ SigDraw是基于StdDraw魔改的产物
 1. 修改为动态类型，允许实例化
 2. 剥离Event,Swing,双缓冲部分
 3. 修改部分函数和启动流程，添加基础函数
-
-## HistogramData
-## CanvaStyle
-### Update Log
-
-#### Version 1 rev.B (2018.12.1)
-
-1. 修复颜色自定义无效的bug
-2. 代码架构优化
-3. json模板结构优化，并统一命名规范
-
-#### Version 1 rev.A (2018.11.30)
-使用json获取数据

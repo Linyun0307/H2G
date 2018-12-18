@@ -23,9 +23,7 @@ public class ConfigLoader {
                 //throw new Exception("Path is not valid!");
             }
         }
-        if(o == null) {
-            System.out.println("Fail to load: "+path);
-        }
+        if(o == null) throw new Exception("Failed to get the data from the path:"+path);
         return o;
     }
 
@@ -38,54 +36,74 @@ public class ConfigLoader {
     }
 
     public String setStr(String init, String path) throws Exception {
-        String _O = getStr(path);
+        /*
         if (_O == null) {
             System.out.println(path + " is not in json. Has been set to Default value " + init);
             return init;
         } else {
             return _O;
+        }*/
+        try {
+            String _O = getStr(path);
+            return _O;
+        } catch (Exception e) {
+            System.out.println(e);
         }
+        return init;
     }
 
     public int getInt(String path) throws Exception {
         Object o = get(path);
         if (o instanceof JsonNumber) return ((JsonNumber) o).intValue();
         else {
-            return -404;
+            return 0;
         }
     }
 
     public int setInt(int init, String path) throws Exception {
-        int _O = getInt(path);
+        /*
         if (_O == -404) {
             System.out.println(path + " is not in json. Has been set to Default value " + init);
             return init;
         } else {
             return _O;
+        }*/
+        try {
+            int _O = getInt(path);
+            return _O;
+        } catch (Exception e) {
+            System.out.println(e);
         }
+        return init;
     }
 
     public double getDouble(String path) throws Exception {
         Object o = get(path);
         if (o instanceof JsonNumber) return ((JsonNumber) o).doubleValue();
         else {
-            return -404;
+            return 0;
         }
     }
 
-    public double setDouble(double init, String path) throws Exception {
-        double _O = getDouble(path);
+    public double setDouble(double init, String path) {
+        /*double _O = getDouble(path);
         if (_O == -404) {
             System.out.println(path + " is not in json. Has been set to Default value " + init);
             return init;
         } else {
             return _O;
+        }*/
+        try {
+            double _O = getDouble(path);
+            return _O;
+        } catch (Exception e) {
+            System.out.println(e);
         }
+        return init;
     }
 
     public boolean getBool(String path) throws Exception {
         Object o = get(path);
-        if(o==null) throw new Exception();
         if (o instanceof JsonValue) {
             switch (((JsonValue) o).getValueType()) {
                 case TRUE:
@@ -100,14 +118,14 @@ public class ConfigLoader {
         }
     }
 
-    public boolean setBool(boolean init, String path) throws Exception {
+    public boolean setBool(boolean init, String path) {
         try {
             boolean _O = getBool(path);
             return _O;
         } catch (Exception e) {
-            return init;
+            System.out.println(e);  
         }
-        
+        return init;
     }
 
     public ConfigLoader(String fileName) throws IOException {
@@ -131,12 +149,19 @@ public class ConfigLoader {
     }
     
     Color setColor(Color init,String pattern) throws Exception {
-        Color _O = getColor(pattern);
-        if (_O == null) {
+        
+        /*if (_O == null) {
             return init;
         } else {
             return _O;
+        }*/
+        try {
+            Color _O = getColor(pattern);
+            return _O;
+        } catch (Exception e) {
+            System.out.println(e);
         }
+        return init;
     }
 
     @Deprecated
@@ -156,12 +181,19 @@ public class ConfigLoader {
     }
 
     Font setFont(Font init, String pattern) throws Exception {
-        Font _O = getFont(pattern);
+        /*
         if (_O == null) {
             return init;
         } else {
             return _O;
+        }*/
+        try {
+            Font _O = getFont(pattern);
+            return _O;
+        } catch (Exception e) {
+            System.out.println(e);
         }
+        return init;
     }
 
     double[] getDoubleArray(String pattern) throws Exception {
@@ -177,12 +209,19 @@ public class ConfigLoader {
     }
 
     double[] setDoubleArray(double[] init,String pattern) throws Exception {
-        double[] _O = getDoubleArray(pattern);
-        if (_O == null) {
+        
+        /*if (_O == null) {
             return init;
         } else {
             return _O;
+        }*/
+        try {
+            double[] _O = getDoubleArray(pattern);
+            return _O;
+        } catch (Exception e) {
+            System.out.println(e);
         }
+        return init;
     }
 
     String[] getStringArray(String pattern) throws Exception {
@@ -197,12 +236,19 @@ public class ConfigLoader {
     }
 
     String[] setStringArray(String[] init,String pattern) throws Exception {
-        String[] _O = getStringArray(pattern);
+        /*
         if (_O == null) {
             return init;
         } else {
             return _O;
+        }*/
+        try {
+            String[] _O = getStringArray(pattern);
+            return _O;
+        } catch (Exception e) {
+            System.out.println(e);
         }
+        return init;
     }
 
     int[] getIntegerArray(String pattern) throws Exception {
@@ -219,12 +265,19 @@ public class ConfigLoader {
     }
 
     int[] setIntegerArray(int[] init,String pattern) throws Exception {
-        int[] _O = getIntegerArray(pattern);
+        /*
         if (_O == null) {
             return init;
         } else {
             return _O;
+        }*/
+        try {
+            int[] _O = getIntegerArray(pattern);
+            return _O;
+        } catch (Exception e) {
+            System.out.println(e);
         }
+        return init;
     }
     
 }

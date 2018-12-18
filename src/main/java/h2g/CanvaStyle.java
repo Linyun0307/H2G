@@ -2,34 +2,57 @@ package h2g;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 
 class CanvaStyle {
     // Background
     int[] bgSize = {1000, 1000};
     Color bgColor = Color.WHITE;
+    double bgTransparency = 1;
 
     // Coordinate
     int[] coordSize = {800, 800};
     int xProject = bgSize[0] / 2;
     int yProject = bgSize[1] / 2;
-    double blankRatio = 0.5;
-    boolean rotated = false;
+    boolean rotated = true;
+    double expandRatio = 0.01;
+    double coordTrantransparency = 0.8;
 
     // Bar
-    String[] barPattern = {"Bar1", "Bar2", "","Bar3","Bar4",""};
-    double[] barWidthRatio = {-1,-1,-1,-1,-1,-1};
-    String[] barSkin = {"Basic","Basic1","Basic","Basic1"};
-    int FPD = 60;
+    String[] barPattern = {"Bar1", ""};
+    double[] barWidthRatio = {0.5, -1};
+    String[] barSkin = {"Basic", "Basic1", "Basic", "Basic1", "Basic", "Basic1", "Basic", "Basic1", "Basic", "Basic1", "Basic", "Basic1", "Basic", "Basic1", "Basic", "Basic1", "Basic", "Basic1", "Basic", "Basic1"};
+    int FPD = 420;
     int FPS = 60;
+    double maxVelocity = 0.1;
+    double maxTrantransparency = 1;
+    double minTrantransparency = 0.2;
+    boolean isStackedBar = false;
+    int maxRulerGrade = 10;
+    boolean enableDynamicRuler = true;
+    String sortMethod = "BubbleSort"; // Availble method: BubbleSort, SelectionSort
+    boolean extendScaleLine = true;
+    BufferedImage legendImg;
 
     // Layout
     int rulerXoffset = 20;
-    int keysYoffset = 20;
+    int keysYoffset = 50;
     int headerXoffset = 0;
-    int headerYoffset = 20;
+    int headerYoffset = 50;
     int footerXoffset = 0;
     int footerYoffset = 50;
 
+    // Legend
+    int[] iconSize = new int[]{50, 50};
+    double[] iconScale = new double[]{0, 50};
+    Font legendFont = new Font("Microsoft YaHei Light", Font.PLAIN, 50);
+    Color legendColor = Color.BLACK;
+    int legendHeight = 60;
+    double LegendX = 500, LegendY = 50;
+    int legendColumnNum = 6;
+    int legendRowNum = 3;
+    double legendScaleFactor = 0.22;
 
     // Fonts
     Font rulerFont = new Font("consolas", Font.PLAIN, 12);
@@ -52,86 +75,93 @@ class CanvaStyle {
     Color barFrameColor = Color.BLACK;*/
     Color borderColor = Color.BLACK;
     Color rulerColor = Color.BLACK;
-    /*    Color rulerMarkColor = Color.BLACK;*/
-    Color keyColor = Color.BLACK;
+    //Color rulerMarkColor = Color.BLACK;
+    Color keysColor = Color.BLACK;
     Color headerColor = Color.BLACK;
     Color footerColor = Color.BLACK;
-    
+    ConfigLoader loader;
+
     /**
      * Load Config from json
      *
      * @param path the json file path
      */
     public void loadConfig(String path) throws Exception {
-        ConfigLoader loader = new ConfigLoader(path);
+        loader = new ConfigLoader(path);
+        DataLoader dataLoader = new DataLoader();
 
-        // Background
-        Object bgSizes = loader.get("bg.size");
-        if (bgSizes instanceof Integer) {
-            bgSize = (int[]) bgSizes;
-        }
+        // Background,bg
+        bgSize = loader.setIntegerArray(bgSize, "bg.size");
+        bgColor = loader.setColor(bgColor, "bg.Color");
+        bgTransparency = loader.setDouble(bgTransparency, "bg.transparency");
 
-        bgColor = loader.getColor("bg.Color");
-
-        //Coordinate
-
-        Object _coordSize = loader.get("coord.size");
-        if (_coordSize instanceof Integer) {
-            coordSize = (int[]) _coordSize;
-        }
+        //Coordinate,coord
+        coordSize = loader.setIntegerArray(coordSize, "coord.size");
+        rotated = loader.setBool(rotated, "coord.rotated");
+        expandRatio = loader.setDouble(expandRatio, "coord.expandRatio");
+        coordTrantransparency = loader.setDouble(coordTrantransparency, "coord.transparency");
+        borderColor = loader.setColor(borderColor, "coord.borderColor");
         xProject = bgSize[0] / 2;
         yProject = bgSize[1] / 2;
-        double _blankRatio = loader.getDouble("coord.blankratio");
-        if (_blankRatio != 0) {
-            blankRatio = _blankRatio;
-        }
-        /*rotate = loader.getBool("rotate");*/
 
-        // Layout
-        int _rulerXoffset = loader.getInt("rulerxoffset");
-        if (_rulerXoffset != 0) rulerXoffset = _rulerXoffset;
-        int _keysYoffset = loader.getInt("keysyoffset");
-        if (_keysYoffset != 0) keysYoffset = _keysYoffset;
-        int _headerXoffset = loader.getInt("headerxoffset");
-        if (_headerXoffset != 0) headerXoffset = _headerXoffset;
-        int _headerYoffset = loader.getInt("headeryoffset");
-        if (_headerYoffset != 0) headerYoffset = _headerYoffset;
-        int _footerXoffset = loader.getInt("footerxoffset");
-        if (_footerXoffset != 0) footerXoffset = _footerXoffset;
-        int _footerYoffset = loader.getInt("footeryoffset");
-        if (_footerYoffset != 0) footerYoffset = _footerYoffset;
+        // Header
+        headerXoffset = loader.setInt(headerXoffset, "header.offset.0");
+        headerYoffset = loader.setInt(headerYoffset, "header.offset.1");
+        headerFont = loader.setFont(headerFont, "header.font");
+        headerColor = loader.setColor(headerColor, "header.color");
 
-        // Fonts
-        Font _rulerFont = loader.getFont("rulerFont");
-        if (_rulerFont != null) rulerFont = _rulerFont;
-        Font _keysFont = loader.getFont("keysFont");
-        if (_keysFont != null) keysFont = _keysFont;
-        Font _headerFont = loader.getFont("headerFont");
-        if (_headerFont != null) headerFont = _headerFont;
-        Font _footerFont = loader.getFont("footerFont");
-        if (_footerFont != null) footerFont = _footerFont;
-        // Switch
-        /*isBarFilled = loader.getBool("isBarFilled");
-        hasBarFrame = loader.getBool("hasBarFrame");*/
-        hasBorder = loader.getBool("hasBorder");
-        hasRuler = loader.getBool("hasRuler");
-        hasRightRuler = loader.getBool("hasRightRuler");
-        hasHeader = loader.getBool("hasHeader");
-        hasFooter = loader.getBool("hasFooter");
+        // Footer
+        footerXoffset = loader.setInt(footerXoffset, "footer.offset.0");
+        footerYoffset = loader.setInt(footerYoffset, "footer.offset.1");
+        footerFont = loader.setFont(footerFont, "footer.font");
+        footerColor = loader.setColor(footerColor, "footer.color");
 
-        // Color
-        Color _borderColor = loader.getColor("borderColor");
-        if (_borderColor != null) borderColor = _borderColor;
-        Color _rulerColor = loader.getColor("rulerColor");
-        if (_rulerColor != null) rulerColor = _rulerColor;
-        Color _headerColor = loader.getColor("headerColor");
-        if (_headerColor != null) headerColor = _headerColor;
-        Color _footerColor = loader.getColor("footerColor");
-        if (_footerColor != null) footerColor = _footerColor;
-        Color _keyColor = loader.getColor("keyColor");
-        if (_keyColor != null) keyColor = _keyColor;
+        // Ruler
+        rulerXoffset = loader.setInt(rulerXoffset, "ruler.offset");
+        rulerFont = loader.setFont(rulerFont, "ruler.font");
+        rulerColor = loader.setColor(rulerColor, "ruler.color");
+        maxRulerGrade = loader.setInt(maxRulerGrade, "ruler.maxRulerGrade");
+        enableDynamicRuler = loader.setBool(enableDynamicRuler, "ruler.enableDynamicRuler");
+        extendScaleLine = loader.setBool(extendScaleLine, "ruler.extendScaleLine");
+        LegendX = loader.setDouble(LegendX, "legend.x");
+        LegendY = loader.setDouble(LegendY, "legend.y");
+
+        //Key
+        keysYoffset = loader.setInt(keysYoffset, "key.offset");
+        keysFont = loader.setFont(keysFont, "key.font");
+        keysColor = loader.setColor(keysColor, "key.color");
+        /*there should be a markColor, but it is not in key nor in the program*/
+
+        // Legend
+        iconSize = loader.setIntegerArray(iconSize, "legend.icons");
+        iconScale[1] = iconSize[1];
+        legendFont = loader.setFont(legendFont, "legend.font");
+        legendHeight = loader.setInt(legendHeight, "legend.height");
+        legendColor = loader.setColor(legendColor, "legend.color");
+        legendScaleFactor = loader.setDouble(legendScaleFactor, "legend.factor");
+        legendColumnNum = loader.setInt(legendColumnNum, "legend.column");
+        legendRowNum = loader.setInt(legendRowNum, "legend.row");
+
+        // interpolator
+        FPS = loader.setInt(FPS, "interpolator.FPS");
+        FPD = loader.setInt(FPD, "interpolator.FPD");
+        maxVelocity = loader.setDouble(maxVelocity, "interpolator.maxVelocity");
+        sortMethod = loader.setStr(sortMethod, "interpolator.sortMethod");
+
+        //bar
+        barPattern = loader.setStringArray(barPattern, "bar.barPattern");
+        barWidthRatio = loader.setDoubleArray(barWidthRatio, "bar.barWidthRatio");
+        barSkin = dataLoader.loadSkins();
+        
+        //Basic_Config
+        isStackedBar = loader.setBool(isStackedBar, "isStackedBar");
+        hasRightRuler = loader.setBool(hasRightRuler, "hasRightRuler");
+        hasBorder = loader.setBool(hasBorder, "hasBorder");
+        hasHeader = loader.setBool(hasHeader, "hasHeader");
+        hasFooter = loader.setBool(hasFooter, "hasFooter");
     }
+
     public void loadConfig() throws Exception {
-        loadConfig("CanvaStyle.json");
+        loadConfig("Data.json");
     }
 }
